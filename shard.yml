@@ -1,0 +1,9 @@
+name: nntp-client
+version: 0.1.0
+
+authors:
+  - Holden Omans <holden.omans@gmail.com>
+
+crystal: 0.34.0
+
+license: MIT
