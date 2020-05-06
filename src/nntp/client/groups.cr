@@ -1,6 +1,11 @@
 require "./context"
 
 class NNTP::Client
+  # Fetch all groups
+  def groups : Array(String)
+    self.socket.list.text
+  end
+
   # Will set the current group to provided *group* and yield `self` to provided block
   # ```
   # client.with_group("alt.binaries.cbt") do |c|
