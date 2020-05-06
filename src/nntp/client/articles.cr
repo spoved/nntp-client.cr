@@ -52,12 +52,42 @@ class NNTP::Client
     check_for_no_such_article(ex, message_id: message_id)
   end
 
-  private def check_for_no_such_article(ex, num : Int64 | Int32 | Nil = nil, message_id : String? = nil)
-    if /No Such Article/i === ex.message
-      msg = ""
-      msg += "Message Id: #{message_id} " unless message_id.nil?
-      msg += "Article Number: #{num}" unless num.nil?
+  # Will return an `Array(String)` that is the article's body text.
+  def article_body(num : Int32 | Int64) : Array(String)
+    self.socket.body(num).text
+  rescue ex : Net::NNTP::Error::ServerBusy
+    check_for_no_such_article(ex, num: num)
+  end
 
+  # :ditto:
+  def article_body(message_id : String) : Array(String)
+    self.socket.body(message_id).text
+  rescue ex : Net::NNTP::Error::ServerBusy
+    check_for_no_such_article(ex, message_id: message_id)
+  end
+
+  def last
+    self.socket.stat context.article_num? ? context.article_num : 0
+    resp = self.socket.last
+    parse_head_resp(resp)
+  rescue ex : Net::NNTP::Error::ServerBusy
+    check_for_no_such_article(ex)
+  end
+
+  def next
+    self.socket.stat context.article_num? ? context.article_num : 0
+    resp = self.socket.next
+    parse_head_resp(resp)
+  rescue ex : Net::NNTP::Error::ServerBusy
+    check_for_no_such_article(ex)
+  end
+
+  private def check_for_no_such_article(ex, num : Int64 | Int32 | Nil = nil, message_id : String? = nil)
+    msg = ""
+    msg += "Message Id: #{message_id} " unless message_id.nil?
+    msg += "Article Number: #{num}" unless num.nil?
+
+    if /No Such Article/i === ex.message
       raise NNTP::Client::Error::NoSuchArticle.new(msg)
     else
       raise ex
@@ -84,19 +114,5 @@ class NNTP::Client
       id:      id,
       headers: headers,
     }
-  end
-
-  # Will return an `Array(String)` that is the article's body text.
-  def article_body(num : Int32 | Int64) : Array(String)
-    self.socket.body(num).text
-  rescue ex : Net::NNTP::Error::ServerBusy
-    check_for_no_such_article(ex, num: num)
-  end
-
-  # :ditto:
-  def article_body(message_id : String) : Array(String)
-    self.socket.body(message_id).text
-  rescue ex : Net::NNTP::Error::ServerBusy
-    check_for_no_such_article(ex, message_id: message_id)
   end
 end

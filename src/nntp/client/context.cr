@@ -14,7 +14,8 @@ class NNTP::Client
 
   # Struct to hold the current group and article header information
   struct Context
-    property group, article
+    property group
+    property article
 
     def initialize(@group : Group?, @article : Header?); end
 
@@ -25,12 +26,12 @@ class NNTP::Client
 
     # Will return `true` if `article_num` is not nil
     def article_num?
-      !self.article.nil? && self.article[:num] != 0
+      !self.article.nil? && self.article.as(Header)[:num] != 0
     end
 
     # Will return `true` if `article_num` is not nil
     def message_id?
-      !self.article.nil? && self.article[:message_id] != 0
+      !self.article.nil? && self.article.as(Header)[:message_id] != 0
     end
 
     # Will return the current article number. If no article number is set it
@@ -41,8 +42,8 @@ class NNTP::Client
     # client.article_num  # => 56910000
     # ```
     def article_num : Int64
-      raise NNTP::Client::Error::NoArticleContext unless article_num?
-      self.article.as(Header)[:num] if article_num?
+      raise NNTP::Client::Error::NoArticleContext.new unless article_num?
+      self.article.as(Header)[:num]
     end
 
     # Will return the current article message id. If no article number is set it
@@ -53,7 +54,7 @@ class NNTP::Client
     # client.message_id  # => "YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu"
     # ```
     def message_id : String
-      raise NNTP::Client::Error::NoArticleContext unless message_id?
+      raise NNTP::Client::Error::NoArticleContext.new unless message_id?
       self.article.as(Header)[:message_id]
     end
   end

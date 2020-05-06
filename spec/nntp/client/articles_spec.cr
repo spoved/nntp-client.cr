@@ -3,12 +3,81 @@ require "../../spec_helper"
 describe NNTP::Client do
   describe "with existing newsgroup" do
     newsgroup = "alt.binaries.cbt"
+
+    describe "active article pointer" do
+      describe "existing" do
+        article_num = 56910000_i64
+
+        it "#last" do
+          with_client do |client|
+            client.with_group newsgroup do
+              client.article_head(article_num)
+              resp = client.last
+              resp[:num].should eq 56909999_i64
+            end
+          end
+        end
+
+        it "#next" do
+          with_client do |client|
+            client.with_group newsgroup do
+              client.article_head(article_num)
+              resp = client.next
+              resp[:num].should eq 56910001_i64
+            end
+          end
+        end
+      end
+
+      describe "missing" do
+        it "#last" do
+          with_client do |client|
+            client.with_group newsgroup do
+              expect_raises NNTP::Client::Error::NoSuchArticle do
+                client.last
+              end
+            end
+          end
+        end
+
+        it "#next" do
+          with_client do |client|
+            client.with_group newsgroup do
+              expect_raises NNTP::Client::Error::NoSuchArticle do
+                client.next
+              end
+            end
+          end
+        end
+      end
+    end
+
     describe "with existing" do
       article_num = 56910000_i64
       message_id = "YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu"
 
       describe "article number" do
         describe "it fetches" do
+          it "#last" do
+            with_client do |client|
+              client.with_group newsgroup do
+                client.article_head(article_num)
+                resp = client.last
+                resp[:num].should eq 56909999_i64
+              end
+            end
+          end
+
+          it "#next" do
+            with_client do |client|
+              client.with_group newsgroup do
+                client.article_head(article_num)
+                resp = client.next
+                resp[:num].should eq 56910001_i64
+              end
+            end
+          end
+
           it "#article_head" do
             with_client do |client|
               client.with_group newsgroup do
