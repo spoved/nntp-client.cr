@@ -6,6 +6,7 @@ describe NNTP::Client do
       it "fetches and parses info" do
         info = with_client &.group_info("alt.binaries.cbt")
         info[:name].should eq "alt.binaries.cbt"
+        puts info
       end
 
       it "raises error when group is missing" do

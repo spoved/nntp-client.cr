@@ -11,14 +11,17 @@ class NNTP::Client
 
     def initialize(@group : Group?, @article_num : Int64?, @message_id : String?); end
 
+    # Will return `true` if `group` is not nil
     def group?
       !self.group.nil?
     end
 
+    # Will return `true` if `article_num` is not nil
     def article_num?
       !self.article_num.nil?
     end
 
+    # Will return `true` if `article_num` is not nil
     def message_id?
       !self.message_id.nil?
     end

@@ -15,9 +15,13 @@ class NNTP::Client
     self.curr_group = nil
   end
 
+  # Will fetch the requested group and return a `Group` tuple. If no group is
+  # found, it will raise a `NNTP::Client::Error::NoSuchGroup` error.
+  # ```
+  # client.group_info "alt.binaries.cbt" # => {name: "alt.binaries.cbt", total: 56894558, first: 15495, last: 56910052}
+  # ```
   def group_info(group) : Group
     resp = socket.group(group)
-
     parts = resp.msg.split(/\s+/)
     {
       name:  parts[3],
