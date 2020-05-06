@@ -34,11 +34,7 @@ class NNTP::Client
     resp = self.socket.head(num)
     parse_head_resp(resp, num)
   rescue ex : Net::NNTP::Error::ServerBusy
-    if /No Such Article/ === ex.message
-      raise NNTP::Client::Error::NoSuchArticle.new("Article Number: #{num}")
-    else
-      raise ex
-    end
+    check_for_no_such_article(ex, num: num)
   end
 
   # See `article_head(num : Int32 | Int64)`.
@@ -53,8 +49,16 @@ class NNTP::Client
     resp = self.socket.head(message_id)
     parse_head_resp(resp)
   rescue ex : Net::NNTP::Error::ServerBusy
+    check_for_no_such_article(ex, message_id: message_id)
+  end
+
+  private def check_for_no_such_article(ex, num : Int64 | Int32 | Nil = nil, message_id : String? = nil)
     if /No Such Article/ === ex.message
-      raise NNTP::Client::Error::NoSuchArticle.new("Message Id: #{message_id}")
+      msg = ""
+      msg += "Message Id: #{message_id} " unless message_id.nil?
+      msg += "Article Number: #{num}" unless num.nil?
+
+      raise NNTP::Client::Error::NoSuchArticle.new(msg)
     else
       raise ex
     end
@@ -80,5 +84,19 @@ class NNTP::Client
       id:      id,
       headers: headers,
     }
+  end
+
+  # Will return an `Array(String)` that is the article's body text.
+  def article_body(num : Int32 | Int64) : Array(String)
+    self.socket.body(num).text
+  rescue ex : Net::NNTP::Error::ServerBusy
+    check_for_no_such_article(ex, num: num)
+  end
+
+  # :ditto:
+  def article_body(message_id : String) : Array(String)
+    self.socket.body(message_id).text
+  rescue ex : Net::NNTP::Error::ServerBusy
+    check_for_no_such_article(ex, message_id: message_id)
   end
 end

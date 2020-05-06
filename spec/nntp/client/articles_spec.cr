@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-describe NNTP::Client do
+describe NNTP::Client, focus: true do
   describe "with existing newsgroup" do
     newsgroup = "alt.binaries.cbt"
     describe "with existing" do
@@ -20,6 +20,16 @@ describe NNTP::Client do
               end
             end
           end
+
+          it "#article_body", focus: true do
+            with_client do |client|
+              client.with_group newsgroup do
+                resp = client.article_body(article_num)
+                resp.should be_a Array(String)
+                resp.should_not be_empty
+              end
+            end
+          end
         end
       end
 
@@ -29,11 +39,20 @@ describe NNTP::Client do
             with_client do |client|
               client.with_group newsgroup do
                 resp = client.article_head(message_id)
-                client.article_head(message_id)
                 resp[:num].should eq 0
                 resp[:id].should eq message_id
                 resp[:headers].should be_a Hash(String, String)
                 resp[:headers].should_not be_empty
+              end
+            end
+          end
+
+          it "#article_body" do
+            with_client do |client|
+              client.with_group newsgroup do
+                resp = client.article_body(message_id)
+                resp.should be_a Array(String)
+                resp.should_not be_empty
               end
             end
           end
@@ -56,6 +75,16 @@ describe NNTP::Client do
               end
             end
           end
+
+          it "#article_body" do
+            with_client do |client|
+              client.with_group newsgroup do
+                expect_raises NNTP::Client::Error::NoSuchArticle, "Article Number: #{article_num}" do
+                  client.article_body(article_num)
+                end
+              end
+            end
+          end
         end
       end
 
@@ -66,6 +95,16 @@ describe NNTP::Client do
               client.with_group newsgroup do
                 expect_raises NNTP::Client::Error::NoSuchArticle, "Message Id: #{message_id}" do
                   client.article_head(message_id)
+                end
+              end
+            end
+          end
+
+          it "#article_body" do
+            with_client do |client|
+              client.with_group newsgroup do
+                expect_raises NNTP::Client::Error::NoSuchArticle, "Message Id: #{message_id}" do
+                  client.article_body(message_id)
                 end
               end
             end
