@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-describe NNTP::Client, focus: true do
+describe NNTP::Client do
   describe "with existing newsgroup" do
     newsgroup = "alt.binaries.cbt"
     describe "with existing" do
@@ -21,7 +21,7 @@ describe NNTP::Client, focus: true do
             end
           end
 
-          it "#article_body", focus: true do
+          it "#article_body" do
             with_client do |client|
               client.with_group newsgroup do
                 resp = client.article_body(article_num)
