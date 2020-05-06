@@ -45,4 +45,12 @@ describe NNTP::Client do
       client.close
     end
   end
+
+  it "#self.connect" do
+    client = NNTP::Client.connect(host: ENV["USENET_HOST"], port: ENV["USENET_PORT"].to_i,
+      user: ENV["USENET_USER"], secret: ENV["USENET_PASS"], method: :original
+    )
+    client.connected?.should be_true
+    client.close
+  end
 end
