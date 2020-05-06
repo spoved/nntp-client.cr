@@ -1,6 +1,6 @@
 require "./spec_helper"
 
-describe Nntp::Client do
+describe NNTP::Client do
   # TODO: Write tests
 
   it "works" do

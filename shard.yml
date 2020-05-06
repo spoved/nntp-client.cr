@@ -7,3 +7,14 @@ authors:
 crystal: 0.34.0
 
 license: MIT
+
+dependencies:
+  nntp-lib:
+    github: spoved/nntp-lib.cr
+    version: ~> 1.0.0
+development_dependencies:
+  dotenv:
+    github: gdotdesign/cr-dotenv
+  ameba:
+    github: veelenga/ameba
+    version: ~> 0.10.0
