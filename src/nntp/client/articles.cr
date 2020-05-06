@@ -53,7 +53,7 @@ class NNTP::Client
   end
 
   private def check_for_no_such_article(ex, num : Int64 | Int32 | Nil = nil, message_id : String? = nil)
-    if /No Such Article/ === ex.message
+    if /No Such Article/i === ex.message
       msg = ""
       msg += "Message Id: #{message_id} " unless message_id.nil?
       msg += "Article Number: #{num}" unless num.nil?
