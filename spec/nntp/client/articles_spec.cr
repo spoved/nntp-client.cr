@@ -11,7 +11,7 @@ describe NNTP::Client do
         it "#last" do
           with_client do |client|
             client.with_group newsgroup do
-              client.article_head(article_num)
+              client.headers(article_num)
               resp = client.last
               resp[:num].should eq 56909999_i64
             end
@@ -21,7 +21,7 @@ describe NNTP::Client do
         it "#next" do
           with_client do |client|
             client.with_group newsgroup do
-              client.article_head(article_num)
+              client.headers(article_num)
               resp = client.next
               resp[:num].should eq 56910001_i64
             end
@@ -61,7 +61,7 @@ describe NNTP::Client do
           it "#last" do
             with_client do |client|
               client.with_group newsgroup do
-                client.article_head(article_num)
+                client.headers(article_num)
                 resp = client.last
                 resp[:num].should eq 56909999_i64
               end
@@ -71,17 +71,17 @@ describe NNTP::Client do
           it "#next" do
             with_client do |client|
               client.with_group newsgroup do
-                client.article_head(article_num)
+                client.headers(article_num)
                 resp = client.next
                 resp[:num].should eq 56910001_i64
               end
             end
           end
 
-          it "#article_head" do
+          it "#headers" do
             with_client do |client|
               client.with_group newsgroup do
-                resp = client.article_head(article_num)
+                resp = client.headers(article_num)
                 resp[:num].should eq article_num
                 resp[:id].should eq message_id
                 resp[:headers].should be_a Hash(String, String)
@@ -90,10 +90,10 @@ describe NNTP::Client do
             end
           end
 
-          it "#article_body" do
+          it "#body" do
             with_client do |client|
               client.with_group newsgroup do
-                resp = client.article_body(article_num)
+                resp = client.body(article_num)
                 resp.should be_a Array(String)
                 resp.should_not be_empty
               end
@@ -104,10 +104,10 @@ describe NNTP::Client do
 
       describe "message id" do
         describe "it fetches" do
-          it "#article_head" do
+          it "#headers" do
             with_client do |client|
               client.with_group newsgroup do
-                resp = client.article_head(message_id)
+                resp = client.headers(message_id)
                 resp[:num].should eq 0
                 resp[:id].should eq message_id
                 resp[:headers].should be_a Hash(String, String)
@@ -116,10 +116,10 @@ describe NNTP::Client do
             end
           end
 
-          it "#article_body" do
+          it "#body" do
             with_client do |client|
               client.with_group newsgroup do
-                resp = client.article_body(message_id)
+                resp = client.body(message_id)
                 resp.should be_a Array(String)
                 resp.should_not be_empty
               end
@@ -135,21 +135,21 @@ describe NNTP::Client do
 
       describe "article number" do
         describe "it raises NoSuchArticle error" do
-          it "#article_head" do
+          it "#headers" do
             with_client do |client|
               client.with_group newsgroup do
                 expect_raises NNTP::Client::Error::NoSuchArticle, "Article Number: #{article_num}" do
-                  client.article_head(article_num)
+                  client.headers(article_num)
                 end
               end
             end
           end
 
-          it "#article_body" do
+          it "#body" do
             with_client do |client|
               client.with_group newsgroup do
                 expect_raises NNTP::Client::Error::NoSuchArticle, "Article Number: #{article_num}" do
-                  client.article_body(article_num)
+                  client.body(article_num)
                 end
               end
             end
@@ -159,21 +159,21 @@ describe NNTP::Client do
 
       describe "message id" do
         describe "it raises NoSuchArticle error" do
-          it "#article_head" do
+          it "#headers" do
             with_client do |client|
               client.with_group newsgroup do
                 expect_raises NNTP::Client::Error::NoSuchArticle, "Message Id: #{message_id}" do
-                  client.article_head(message_id)
+                  client.headers(message_id)
                 end
               end
             end
           end
 
-          it "#article_body" do
+          it "#body" do
             with_client do |client|
               client.with_group newsgroup do
                 expect_raises NNTP::Client::Error::NoSuchArticle, "Message Id: #{message_id}" do
-                  client.article_body(message_id)
+                  client.body(message_id)
                 end
               end
             end

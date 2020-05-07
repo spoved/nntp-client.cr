@@ -2,9 +2,19 @@ require "./context"
 
 class NNTP::Client
   private def check_group_context!
+    conn_check!
+
     raise NNTP::Client::Error::NoGroupContext.new(
       "A newsgroup must be set before trying to use an article"
-    ) if self.context.group?
+    ) unless self.context.group?
+  end
+
+  private def check_article_context!
+    conn_check!
+
+    raise NNTP::Client::Error::NoArticleContext.new(
+      "A article must be set before calling this method"
+    ) unless self.context.article_num?
   end
 
   # Will set the current article to provided *num* and yield `self` to provided block
@@ -16,10 +26,10 @@ class NNTP::Client
   # end
   # ```
   def with_article(num : Int32 | Int64, &block)
-    conn_check!
     check_group_context!
+
     Log.info { "#{host}: setting current article to #{num}" }
-    self.curr_article = self.socket.head(num)
+    self.curr_article = self.headers(num)
     yield self
     unset_article_context
   end
@@ -27,25 +37,29 @@ class NNTP::Client
   # Will return a `Header` tuple with the fetched article information.
   # ```
   # client.with_group "alt.binaries.cbt" do
-  #   client.article_head 56910000 # => {num: 56910000, id: "YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu", headers: {"Organization" => "Usenet.Farm", "Message-Id" => "<YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu>", "User-Agent" => "Nyuu/0.3.8", "X-Ufhash" => "lHibuaCxtuuI3C4ugIWhcSBuWhY%2B2Wu5sbzIanIMroeK4nRzeUWbUwFaNNhD7Tot6%2FKfcwbvXWhI9Am82VQ%2BKph5IYQ8NMOUARHaXY8LlmDbOnmGi8qNLxh0IocmkVeY04Cfy2trF4cEtuV3wP1kSR7IfuJV3UPO9ORwOFvlZtOe6CwX16D%2BKM1%2B%2FBcetDZIGZapQoDQIhngZNENi5cRFlWbmy3CEqwpMsm8", "Date" => "Fri, 17 Apr 20 05:58:28 UTC", "Path" => "not-for-mail", "Subject" => "[170/170] - \"2CDrmrC36H47j0n1f.part161.rar\" yEnc (186/214) 153066646", "From" => "3vq60fEnli <AEdwj0ie5p@kgiqA10.com>", "Newsgroups" => "alt.binaries.bungalow,alt.binaries.downunder,alt.binaries.flowed,alt.binaries.cbt,alt.binaries.test, alt.binaries.boneless,alt.binaries.iso", "X-Received-Bytes" => "740517", "X-Received-Body-CRC" => "3585757165"}}
+  #   client.headers 56910000 # => {num: 56910000, id: "YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu", headers: {"Organization" => "Usenet.Farm", "Message-Id" => "<YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu>", "User-Agent" => "Nyuu/0.3.8", "X-Ufhash" => "lHibuaCxtuuI3C4ugIWhcSBuWhY%2B2Wu5sbzIanIMroeK4nRzeUWbUwFaNNhD7Tot6%2FKfcwbvXWhI9Am82VQ%2BKph5IYQ8NMOUARHaXY8LlmDbOnmGi8qNLxh0IocmkVeY04Cfy2trF4cEtuV3wP1kSR7IfuJV3UPO9ORwOFvlZtOe6CwX16D%2BKM1%2B%2FBcetDZIGZapQoDQIhngZNENi5cRFlWbmy3CEqwpMsm8", "Date" => "Fri, 17 Apr 20 05:58:28 UTC", "Path" => "not-for-mail", "Subject" => "[170/170] - \"2CDrmrC36H47j0n1f.part161.rar\" yEnc (186/214) 153066646", "From" => "3vq60fEnli <AEdwj0ie5p@kgiqA10.com>", "Newsgroups" => "alt.binaries.bungalow,alt.binaries.downunder,alt.binaries.flowed,alt.binaries.cbt,alt.binaries.test, alt.binaries.boneless,alt.binaries.iso", "X-Received-Bytes" => "740517", "X-Received-Body-CRC" => "3585757165"}}
   # end
   # ```
-  def article_head(num : Int32 | Int64)
+  def headers(num : Int32 | Int64)
+    check_group_context!
+
     resp = self.socket.head(num)
     parse_head_resp(resp, num)
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex, num: num)
   end
 
-  # See `article_head(num : Int32 | Int64)`.
+  # See `headers(num : Int32 | Int64)`.
   # Note: Using the *message_id* instead of article num
   # will return a article num of `0`.
   # ```
   # client.with_group "alt.binaries.cbt" do
-  #   client.article_head "YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu" # => {num: 0, id: "YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu", headers: {"Organization" => "Usenet.Farm", "Message-Id" => "<YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu>", "User-Agent" => "Nyuu/0.3.8", "X-Ufhash" => "lHibuaCxtuuI3C4ugIWhcSBuWhY%2B2Wu5sbzIanIMroeK4nRzeUWbUwFaNNhD7Tot6%2FKfcwbvXWhI9Am82VQ%2BKph5IYQ8NMOUARHaXY8LlmDbOnmGi8qNLxh0IocmkVeY04Cfy2trF4cEtuV3wP1kSR7IfuJV3UPO9ORwOFvlZtOe6CwX16D%2BKM1%2B%2FBcetDZIGZapQoDQIhngZNENi5cRFlWbmy3CEqwpMsm8", "Date" => "Fri, 17 Apr 20 05:58:28 UTC", "Path" => "not-for-mail", "Subject" => "[170/170] - \"2CDrmrC36H47j0n1f.part161.rar\" yEnc (186/214) 153066646", "From" => "3vq60fEnli <AEdwj0ie5p@kgiqA10.com>", "Newsgroups" => "alt.binaries.bungalow,alt.binaries.downunder,alt.binaries.flowed,alt.binaries.cbt,alt.binaries.test, alt.binaries.boneless,alt.binaries.iso", "X-Received-Bytes" => "740517", "X-Received-Body-CRC" => "3585757165"}}
+  #   client.headers "YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu" # => {num: 0, id: "YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu", headers: {"Organization" => "Usenet.Farm", "Message-Id" => "<YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu>", "User-Agent" => "Nyuu/0.3.8", "X-Ufhash" => "lHibuaCxtuuI3C4ugIWhcSBuWhY%2B2Wu5sbzIanIMroeK4nRzeUWbUwFaNNhD7Tot6%2FKfcwbvXWhI9Am82VQ%2BKph5IYQ8NMOUARHaXY8LlmDbOnmGi8qNLxh0IocmkVeY04Cfy2trF4cEtuV3wP1kSR7IfuJV3UPO9ORwOFvlZtOe6CwX16D%2BKM1%2B%2FBcetDZIGZapQoDQIhngZNENi5cRFlWbmy3CEqwpMsm8", "Date" => "Fri, 17 Apr 20 05:58:28 UTC", "Path" => "not-for-mail", "Subject" => "[170/170] - \"2CDrmrC36H47j0n1f.part161.rar\" yEnc (186/214) 153066646", "From" => "3vq60fEnli <AEdwj0ie5p@kgiqA10.com>", "Newsgroups" => "alt.binaries.bungalow,alt.binaries.downunder,alt.binaries.flowed,alt.binaries.cbt,alt.binaries.test, alt.binaries.boneless,alt.binaries.iso", "X-Received-Bytes" => "740517", "X-Received-Body-CRC" => "3585757165"}}
   # end
   # ```
-  def article_head(message_id : String)
+  def headers(message_id : String)
+    check_group_context!
+
     resp = self.socket.head(message_id)
     parse_head_resp(resp)
   rescue ex : Net::NNTP::Error::ServerBusy
@@ -53,20 +67,48 @@ class NNTP::Client
   end
 
   # Will return an `Array(String)` that is the article's body text.
-  def article_body(num : Int32 | Int64) : Array(String)
+  def body(num : Int32 | Int64) : Array(String)
+    check_group_context!
+
     self.socket.body(num).text
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex, num: num)
   end
 
   # :ditto:
-  def article_body(message_id : String) : Array(String)
+  def body(message_id : String) : Array(String)
     self.socket.body(message_id).text
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex, message_id: message_id)
   end
 
+  def xheader(header, message_id : String? = nil)
+    check_group_context!
+    check_article_context! if message_id.nil?
+    self.socket.xdhr(header, message_id)
+  rescue ex : Net::NNTP::Error::ServerBusy
+    check_for_no_such_article(ex, message_id: message_id)
+  end
+
+  def xheader(header, num : Int64 | Int32, end_num : Int64 | Int32 | Nil = nil, all : Bool = false)
+    check_group_context!
+
+    self.socket.xdhr(header, num, end_num, all)
+  rescue ex : Net::NNTP::Error::ServerBusy
+    check_for_no_such_article(ex)
+  end
+
+  def xover(num : Int64 | Int32, end_num : Int64 | Int32 | Nil = nil, all : Bool = false)
+    check_group_context!
+
+    self.socket.xover(num, end_num, all)
+  rescue ex : Net::NNTP::Error::ServerBusy
+    check_for_no_such_article(ex)
+  end
+
   def last
+    check_group_context!
+
     self.socket.stat context.article_num? ? context.article_num : 0
     resp = self.socket.last
     parse_head_resp(resp)
@@ -75,6 +117,8 @@ class NNTP::Client
   end
 
   def next
+    check_group_context!
+
     self.socket.stat context.article_num? ? context.article_num : 0
     resp = self.socket.next
     parse_head_resp(resp)

@@ -16,7 +16,9 @@ class NNTP::Client
     conn_check!
     Log.info { "#{host}: setting current group to #{group}" }
     self.curr_group = group_info(group)
+
     yield self
+
     self.curr_group = nil
   end
 
