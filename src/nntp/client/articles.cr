@@ -1,22 +1,6 @@
 require "./context"
 
 class NNTP::Client
-  private def check_group_context!
-    conn_check!
-
-    raise NNTP::Client::Error::NoGroupContext.new(
-      "A newsgroup must be set before trying to use an article"
-    ) unless self.context.group?
-  end
-
-  private def check_article_context!
-    conn_check!
-
-    raise NNTP::Client::Error::NoArticleContext.new(
-      "A article must be set before calling this method"
-    ) unless self.context.article_num?
-  end
-
   # Will set the current article to provided *num* and yield `self` to provided block
   # ```
   # client.with_group("alt.binaries.cbt") do
@@ -29,9 +13,9 @@ class NNTP::Client
     check_group_context!
 
     Log.info { "#{host}: setting current article to #{num}" }
-    self.curr_article = self.headers(num)
+    context_start(nil, num)
     yield self
-    unset_article_context
+    context_done
   end
 
   # Will return a `Header` tuple with the fetched article information.
@@ -43,10 +27,14 @@ class NNTP::Client
   def headers(num : Int32 | Int64)
     check_group_context!
 
-    resp = self.socket.head(num)
-    parse_head_resp(resp, num)
+    _headers(num)
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex, num: num)
+  end
+
+  private def _headers(num : Int32 | Int64)
+    resp = self.socket.head(num)
+    parse_head_resp(resp, num)
   end
 
   # See `headers(num : Int32 | Int64)`.

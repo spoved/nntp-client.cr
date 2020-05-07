@@ -15,11 +15,9 @@ class NNTP::Client
   def with_group(group, &block)
     conn_check!
     Log.info { "#{host}: setting current group to #{group}" }
-    self.curr_group = group_info(group)
-
+    context_start(group, nil)
     yield self
-
-    self.curr_group = nil
+    context_done
   end
 
   # Will fetch the requested group and return a `Group` tuple. If no group is

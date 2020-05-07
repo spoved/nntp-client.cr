@@ -13,10 +13,10 @@ describe NNTP::Client do
     describe "#with_group" do
       it "changes current context" do
         with_client do |client|
-          client.current_context.group.should be_nil
+          client.context.group.should be_nil
           client.with_group group do
-            client.current_context.group.should_not be_nil
-            client.current_context.group.not_nil![:name].should eq group
+            client.context.group.should_not be_nil
+            client.context.group.not_nil![:name].should eq group
           end
         end
       end
@@ -37,10 +37,10 @@ describe NNTP::Client do
       it "raises error" do
         expect_raises NNTP::Client::Error::NoSuchGroup, group do
           with_client do |client|
-            client.current_context.group.should be_nil
+            client.context.group.should be_nil
             client.with_group group do
-              client.current_context.group.should_not be_nil
-              client.current_context.group.not_nil![:name].should eq group
+              client.context.group.should_not be_nil
+              client.context.group.not_nil![:name].should eq group
             end
           end
         end
