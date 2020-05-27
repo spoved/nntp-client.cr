@@ -1,5 +1,6 @@
 # nntp-client
 
+[![Build Status](https://travis-ci.com/spoved/nntp-client.cr.svg?branch=master)](https://travis-ci.com/spoved/nntp-client.cr)
 A NNTP (Network News Transfer Protocol) client aimed to provide a more useful interface to the [nntp-lib](https://github.com/spoved/nntp-lib.cr)
 
 ## Installation
