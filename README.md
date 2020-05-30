@@ -8,11 +8,9 @@ A NNTP (Network News Transfer Protocol) client aimed to provide a more useful in
 
 1. Add the dependency to your `shard.yml`:
 
-   ```yaml
-   dependencies:
-     nntp-client:
-       github: spoved/nntp-client.cr
-   ```
+    dependencies:
+      nntp-client:
+        github: spoved/nntp-client.cr
 
 2. Run `shards install`
 

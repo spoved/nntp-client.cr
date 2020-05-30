@@ -35,7 +35,7 @@ class NNTP::Client
       last:  parts[2].to_i64,
     }
   rescue ex : Net::NNTP::Error::ServerBusy
-    if /No Such Group/ === ex.message
+    if /No Such Group/i === ex.message || /411/ === ex.message
       raise NNTP::Client::Error::NoSuchGroup.new(group)
     else
       raise ex
