@@ -85,6 +85,8 @@ module NNTP
       if connected?
         self.nntp_socket.not_nil!.finish
       end
+    rescue ex : Net::NNTP::Error::UnknownError
+      # can raise an error if socket is already closed
     end
 
     # Returns `true` if a connection has been established and `false` if not.
