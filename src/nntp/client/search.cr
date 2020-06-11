@@ -39,8 +39,8 @@ class NNTP::Client
     with_group group do
       while start_num < info[:last]
         end_num = (start_num + batch_size)
-        Log.verbose { "Searching articles #{start_num}-#{end_num}" \
-                      " out of ~#{info[:last]} : #{(end_num / info[:last]) * 100}%" }
+        Log.debug { "Searching articles #{start_num}-#{end_num}" \
+                    " out of ~#{info[:last]} : #{(end_num / info[:last]) * 100}%" }
 
         resp = xheader("message-id", start_num, end_num)
         resp.text.each do |line|
@@ -82,8 +82,8 @@ class NNTP::Client
     with_group group do
       while start_num < info[:last]
         end_num = (start_num + batch_size)
-        Log.verbose { "Searching articles #{start_num}-#{end_num}" \
-                      " out of ~#{info[:last]} : #{(end_num / info[:last]) * 100}%" }
+        Log.debug { "Searching articles #{start_num}-#{end_num}" \
+                    " out of ~#{info[:last]} : #{(end_num / info[:last]) * 100}%" }
 
         resp = xheader(header, start_num, end_num)
         resp.text.each do |line|
