@@ -1,6 +1,10 @@
 require "./context"
 
 class NNTP::Client
+  delegate list_active, list_active_times, list_distributions,
+    list_distrib_pats, list_newsgroups, list_subscriptions,
+    to: @nntp_socket
+
   # Fetch all groups
   def groups : Array(String)
     self.socket.list.text
@@ -40,5 +44,9 @@ class NNTP::Client
     else
       raise ex
     end
+  end
+
+  def group_articles(group)
+    self.socket.listgroup(group).text
   end
 end
