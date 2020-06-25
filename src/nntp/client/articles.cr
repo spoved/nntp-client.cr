@@ -147,8 +147,4 @@ class NNTP::Client
       headers: headers,
     }
   end
-
-  def article_ids
-    self.socket.listgroup.text
-  end
 end

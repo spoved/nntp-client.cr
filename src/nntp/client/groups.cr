@@ -46,7 +46,14 @@ class NNTP::Client
     end
   end
 
-  def group_articles(group)
-    self.socket.listgroup(group).text
+  # Will fetch a list of the article numbers in the provided group
+  def group_article_ids(group)
+    self.socket.listgroup(group).text.map &.to_i64
+  end
+
+  # Will fetch a list of the article numbers in the current group
+  def article_ids
+    check_group_context!
+    self.socket.listgroup.text.map &.to_i64
   end
 end
