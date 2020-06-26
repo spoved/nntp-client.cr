@@ -3,7 +3,7 @@ require "./context"
 class NNTP::Client
   delegate list_active, list_active_times, list_distributions,
     list_distrib_pats, list_newsgroups, list_subscriptions,
-    to: @nntp_socket
+    to: @nntp_socket.not_nil!
 
   # Fetch all groups
   def groups : Array(String)
