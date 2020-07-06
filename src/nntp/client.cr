@@ -14,6 +14,7 @@ module NNTP
     property use_ssl : Bool = true
     property open_timeout : Int32 = 30
     property read_timeout : Int32 = 60
+    property verify_mode : OpenSSL::SSL::VerifyMode = OpenSSL::SSL::VerifyMode::PEER
 
     def initialize; end
 
@@ -28,6 +29,7 @@ module NNTP
     end
 
     def self.new(host, port = 119, use_ssl = true,
+                 verify_mode : OpenSSL::SSL::VerifyMode = OpenSSL::SSL::VerifyMode::PEER,
                  open_timeout : Int32 = 30,
                  read_timeout : Int32 = 60) : Client
       NNTP::Client.new.configure do |c|
@@ -36,6 +38,7 @@ module NNTP
         c.use_ssl = use_ssl
         c.open_timeout = open_timeout
         c.read_timeout = read_timeout
+        c.verify_mode = verify_mode
       end
     end
 
@@ -46,6 +49,7 @@ module NNTP
     # client.connected? # => true
     # ```
     def self.connect(host, port = 119, use_ssl = true,
+                     verify_mode : OpenSSL::SSL::VerifyMode = OpenSSL::SSL::VerifyMode::PEER,
                      open_timeout : Int32 = 30,
                      read_timeout : Int32 = 60,
                      user : String? = nil, secret : String? = nil,
@@ -56,6 +60,7 @@ module NNTP
         c.use_ssl = use_ssl
         c.open_timeout = open_timeout
         c.read_timeout = read_timeout
+        c.verify_mode = verify_mode
       end
 
       client.connect(user, secret, method)
@@ -76,8 +81,10 @@ module NNTP
     # ```
     def configure
       yield self
+      ssl_context = OpenSSL::SSL::Context::Client.new
+      ssl_context.verify_mode = verify_mode
 
-      self.nntp_socket = NNTP::Socket.new(host, port, use_ssl, open_timeout, read_timeout)
+      self.nntp_socket = NNTP::Socket.new(host, port, use_ssl, open_timeout, read_timeout, ssl_context: ssl_context)
       self
     end
 
