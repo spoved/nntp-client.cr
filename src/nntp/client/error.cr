@@ -8,4 +8,6 @@ class NNTP::Client::Error < Exception
   class NoArticleContext < ContextError; end
 
   class NoSuchArticle < NNTP::Client::Error; end
+
+  class NoConnection < NNTP::Client::Error; end
 end

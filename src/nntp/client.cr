@@ -25,7 +25,7 @@ module NNTP
 
     # :nodoc:
     private def conn_check!
-      raise "There is no active connection!" unless connected?
+      raise NNTP::Client::Error::NoConnection.new("There is no active connection!") unless connected?
     end
 
     def self.new(host, port = 119, use_ssl = true,
