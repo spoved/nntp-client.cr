@@ -80,6 +80,11 @@ class NNTP::Client
     context? ? _contexts.last : NNTP::Client::Context.new(nil, nil)
   end
 
+  # Will set current context
+  def set_context(context : NNTP::Client::Context)
+    context_start(context.group, context.article_num? ? context.article_num : nil)
+  end
+
   private def context_start(group : String?, article : Int32 | Int64 | Nil = nil)
     new_group, group_changed = _group_context_update(group)
     new_headers = _article_context_update(new_group, group_changed, article)
