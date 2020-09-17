@@ -82,7 +82,7 @@ class NNTP::Client
 
   # Will set current context
   def set_context(context : NNTP::Client::Context)
-    context_start(context.group, context.article_num? ? context.article_num : nil)
+    context_start(context.group_name, context.article_num? ? context.article_num : nil)
   end
 
   private def context_start(group : String?, article : Int32 | Int64 | Nil = nil)
