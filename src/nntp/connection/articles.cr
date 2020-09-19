@@ -1,6 +1,6 @@
 require "./context"
 
-class NNTP::Client
+module NNTP::Connection::Articles
   # Will set the current article to provided *num* and yield `self` to provided block
   # ```
   # client.with_group("alt.binaries.cbt") do
@@ -120,7 +120,7 @@ class NNTP::Client
     msg += "Article Number: #{num}" unless num.nil?
 
     if /No Such Article/i === ex.message
-      raise NNTP::Client::Error::NoSuchArticle.new(msg)
+      raise NNTP::Error::NoSuchArticle.new(msg)
     else
       raise ex
     end

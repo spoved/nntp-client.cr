@@ -1,6 +1,6 @@
 require "./articles"
 
-class NNTP::Client
+module NNTP::Connection::Search
   # Search for the provided *message_id* in the provided *group*. Will return a `Int64`
   # indicating the article number in the group if found.
   # *batch_size* determines the amount of articles to query at a time, while
@@ -60,7 +60,7 @@ class NNTP::Client
   # If *exact* is `true` it will attempt to match the entire header value.
   #
   # *group* can be ommited if used within a `with_group` block. If the current context
-  # does not have a group a `NNTP::Client::Error::NoGroupContext` error will be raised.
+  # does not have a group a `NNTP::Error::NoGroupContext` error will be raised.
   #
   # *batch_size* determines the amount of articles to query at a time, while
   # *offset* determines the article start position. If `nil` *offset* will default

@@ -1,94 +1,31 @@
-class NNTP::Client
-  alias Group = NamedTuple(
-    name: String,
-    total: Int64,
-    first: Int64,
-    last: Int64,
-  )
+require "../context"
 
-  alias Header = NamedTuple(
-    num: Int64,
-    id: String,
-    headers: Hash(String, String),
-  )
-
-  # Struct to hold the current group and article header information
-  struct Context
-    property group : Group?
-    property article : Header?
-
-    def initialize(@group : Group?, @article : Header?); end
-
-    # Will return `true` if `group` is not nil
-    def group?
-      !self.group.nil?
-    end
-
-    # Will return `true` if `article_num` is not nil and not 0
-    def article_num?
-      !self.article.nil? && self.article.as(Header)[:num] != 0
-    end
-
-    # :ditto:
-    def article?
-      article_num?
-    end
-
-    # Will return `true` if `article_num` is not nil
-    def message_id?
-      !self.article.nil? && self.article.not_nil![:message_id] != 0
-    end
-
-    def group_name : String
-      self.group.not_nil![:name]
-    end
-
-    # Will return the current article number. If no article number is set it
-    # will raise a `NNTP::Client::Error::NoArticleContext` error. Check before
-    # access with `article_num?`
-    # ```
-    # client.article_num? # => true
-    # client.article_num  # => 56910000
-    # ```
-    def article_num : Int64
-      raise NNTP::Client::Error::NoArticleContext.new unless article_num?
-      self.article.as(Header)[:num]
-    end
-
-    # Will return the current article message id. If no article number is set it
-    # will raise a `NNTP::Client::Error::NoArticleContext` error. Check before
-    # access with `message_id?`
-    # ```
-    # client.message_id? # => true
-    # client.message_id  # => "YwGnYrShOtJaBfSzZlTkKbBh-1587103108703@nyuu"
-    # ```
-    def message_id : String
-      raise NNTP::Client::Error::NoArticleContext.new unless message_id?
-      self.article.as(Header)[:message_id]
-    end
-  end
-
-  private property _contexts : Array(NNTP::Client::Context) = Array(NNTP::Client::Context).new
+module NNTP::Connection::Context
+  private property _contexts : Array(NNTP::Context) = Array(NNTP::Context).new
 
   def context? : Bool?
     !_contexts.empty?
   end
 
-  # Returns the current `NNTP::Client::Context` indicating which (if any) NNTP positions are set.
+  def clear_context
+    _contexts.clear
+  end
+
+  # Returns the current `NNTP::Context` indicating which (if any) NNTP positions are set.
   # (i.e. current group, article num or message id)
-  def context : NNTP::Client::Context
-    context? ? _contexts.last : NNTP::Client::Context.new(nil, nil)
+  def context : NNTP::Context
+    context? ? _contexts.last : NNTP::Context.new(nil, nil)
   end
 
   # Will set current context
-  def set_context(context : NNTP::Client::Context)
+  def set_context(context : NNTP::Context)
     context_start(context.group_name, context.article_num? ? context.article_num : nil)
   end
 
   private def context_start(group : String?, article : Int32 | Int64 | Nil = nil)
     new_group, group_changed = _group_context_update(group)
     new_headers = _article_context_update(new_group, group_changed, article)
-    _contexts << NNTP::Client::Context.new(new_group, new_headers)
+    _contexts << NNTP::Context.new(new_group, new_headers)
   end
 
   private def _group_context_update(group)
@@ -100,7 +37,7 @@ class NNTP::Client
         group_changed = false
       else
         # If we dont have a new or previous group to reference, time to raise a error
-        raise NNTP::Client::Error::NoGroupContext.new(
+        raise NNTP::Error::NoGroupContext.new(
           "A newsgroup must be provided or previously defined to change contexts"
         )
       end
@@ -126,7 +63,7 @@ class NNTP::Client
       nil
     elsif new_group.nil?
       # unsure how we got here, but if the new group is nil, raise an error
-      raise NNTP::Client::Error::NoGroupContext.new(
+      raise NNTP::Error::NoGroupContext.new(
         "A newsgroup must be provided or previously defined to change contexts"
       )
     elsif !group_changed && context.article? && context.article_num == article
@@ -170,14 +107,14 @@ class NNTP::Client
 
   private def check_group_context!
     conn_check!
-    raise NNTP::Client::Error::NoGroupContext.new(
+    raise NNTP::Error::NoGroupContext.new(
       "A newsgroup must be set before trying to use an article"
     ) if !self.context? || !self.context.group?
   end
 
   private def check_article_context!
     conn_check!
-    raise NNTP::Client::Error::NoArticleContext.new(
+    raise NNTP::Error::NoArticleContext.new(
       "A article must be set before calling this method"
     ) if !self.context? || !self.context.article_num?
   end

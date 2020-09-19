@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-describe NNTP::Client do
+describe NNTP::Connection do
   describe "with existing newsgroup" do
     newsgroup = "alt.binaries.cbt"
 
@@ -33,7 +33,7 @@ describe NNTP::Client do
         it "#last" do
           with_client do |client|
             client.with_group newsgroup do
-              expect_raises NNTP::Client::Error::NoSuchArticle do
+              expect_raises NNTP::Error::NoSuchArticle do
                 client.last
               end
             end
@@ -43,7 +43,7 @@ describe NNTP::Client do
         it "#next" do
           with_client do |client|
             client.with_group newsgroup do
-              expect_raises NNTP::Client::Error::NoSuchArticle do
+              expect_raises NNTP::Error::NoSuchArticle do
                 client.next
               end
             end
@@ -138,7 +138,7 @@ describe NNTP::Client do
           it "#headers" do
             with_client do |client|
               client.with_group newsgroup do
-                expect_raises NNTP::Client::Error::NoSuchArticle, "Article Number: #{article_num}" do
+                expect_raises NNTP::Error::NoSuchArticle, "Article Number: #{article_num}" do
                   client.headers(article_num)
                 end
               end
@@ -148,7 +148,7 @@ describe NNTP::Client do
           it "#body" do
             with_client do |client|
               client.with_group newsgroup do
-                expect_raises NNTP::Client::Error::NoSuchArticle, "Article Number: #{article_num}" do
+                expect_raises NNTP::Error::NoSuchArticle, "Article Number: #{article_num}" do
                   client.body(article_num)
                 end
               end
@@ -162,7 +162,7 @@ describe NNTP::Client do
           it "#headers" do
             with_client do |client|
               client.with_group newsgroup do
-                expect_raises NNTP::Client::Error::NoSuchArticle, "Message Id: #{message_id}" do
+                expect_raises NNTP::Error::NoSuchArticle, "Message Id: #{message_id}" do
                   client.headers(message_id)
                 end
               end
@@ -172,7 +172,7 @@ describe NNTP::Client do
           it "#body" do
             with_client do |client|
               client.with_group newsgroup do
-                expect_raises NNTP::Client::Error::NoSuchArticle, "Message Id: #{message_id}" do
+                expect_raises NNTP::Error::NoSuchArticle, "Message Id: #{message_id}" do
                   client.body(message_id)
                 end
               end

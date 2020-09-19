@@ -1,6 +1,6 @@
-require "./context"
+require "../context"
 
-class NNTP::Client
+module NNTP::Connection::Groups
   delegate list_active, list_active_times, list_distributions,
     list_distrib_pats, list_newsgroups, list_subscriptions,
     to: @nntp_socket.not_nil!
@@ -25,11 +25,11 @@ class NNTP::Client
   end
 
   # Will fetch the requested group and return a `Group` tuple. If no group is
-  # found, it will raise a `NNTP::Client::Error::NoSuchGroup` error.
+  # found, it will raise a `NNTP::Error::NoSuchGroup` error.
   # ```
   # client.group_info "alt.binaries.cbt" # => {name: "alt.binaries.cbt", total: 56894558, first: 15495, last: 56910052}
   # ```
-  def group_info(group) : Group
+  def group_info(group) : NNTP::Context::Group
     resp = socket.group(group)
     parts = resp.msg.split(/\s+/)
     {
@@ -40,7 +40,7 @@ class NNTP::Client
     }
   rescue ex : Net::NNTP::Error::ServerBusy
     if /No Such Group/i === ex.message || /411/ === ex.message
-      raise NNTP::Client::Error::NoSuchGroup.new(group)
+      raise NNTP::Error::NoSuchGroup.new(group)
     else
       raise ex
     end

@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-describe NNTP::Client do
+describe NNTP::Connection do
   describe "with existing newsgroup" do
     group = "alt.binaries.cbt"
     describe "#group_info" do
@@ -27,7 +27,7 @@ describe NNTP::Client do
     group = "made.up.group"
     describe "#group_info" do
       it "raises error" do
-        expect_raises NNTP::Client::Error::NoSuchGroup, group do
+        expect_raises NNTP::Error::NoSuchGroup, group do
           with_client &.group_info(group)
         end
       end
@@ -35,7 +35,7 @@ describe NNTP::Client do
 
     describe "#with_group" do
       it "raises error" do
-        expect_raises NNTP::Client::Error::NoSuchGroup, group do
+        expect_raises NNTP::Error::NoSuchGroup, group do
           with_client do |client|
             client.context.group.should be_nil
             client.with_group group do

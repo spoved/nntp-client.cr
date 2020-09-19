@@ -1,129 +1,103 @@
-require "log"
-require "nntp-lib"
-
-alias NNTP::Socket = Net::NNTP
+require "./connection"
 
 module NNTP
   class Client
-    Log = ::Log.for(self)
-
-    private property nntp_socket : NNTP::Socket? = nil
-
-    property host : String = "127.0.0.1"
-    property port : Int32 = 119
-    property use_ssl : Bool = true
-    property open_timeout : Int32 = 30
-    property read_timeout : Int32 = 60
-    property verify_mode : OpenSSL::SSL::VerifyMode = OpenSSL::SSL::VerifyMode::PEER
-
-    def initialize; end
+    include ConnectionContext
 
     # :nodoc:
-    private def socket : NNTP::Socket
-      self.nntp_socket.not_nil!
+    getter pool : NNTP::Pool(NNTP::Connection)
+
+    # Returns the uri with the connection settings to the server
+    getter uri : URI
+
+    @pool : Pool(NNTP::Connection)
+    @setup_connection : NNTP::Connection -> Nil
+
+    def connection_pool_options(params : HTTP::Params)
+      {
+        initial_pool_size:  params.fetch("initial_pool_size", 1).to_i,
+        max_pool_size:      params.fetch("max_pool_size", 0).to_i,
+        max_idle_pool_size: params.fetch("max_idle_pool_size", 1).to_i,
+        checkout_timeout:   params.fetch("checkout_timeout", 5.0).to_f,
+        retry_attempts:     params.fetch("retry_attempts", 1).to_i,
+        retry_delay:        params.fetch("retry_delay", 1.0).to_f,
+      }
     end
 
     # :nodoc:
-    private def conn_check!
-      raise NNTP::Client::Error::NoConnection.new("There is no active connection!") unless connected?
+    def initialize(@uri : URI)
+      params = HTTP::Params.parse(uri.query || "")
+      pool_options = connection_pool_options(params)
+
+      @setup_connection = ->(conn : NNTP::Connection) {
+        conn.connect(@uri)
+      }
+      @pool = uninitialized Pool(Connection) # in order to use self in the factory proc
+      @pool = Pool.new(**pool_options) {
+        conn = NNTP::Connection.new(@uri)
+        conn.client_context = self
+        conn.auto_release = false
+        @setup_connection.call conn
+        conn
+      }
     end
 
-    def self.new(host, port = 119, use_ssl = true,
-                 verify_mode : OpenSSL::SSL::VerifyMode = OpenSSL::SSL::VerifyMode::PEER,
-                 open_timeout : Int32 = 30,
-                 read_timeout : Int32 = 60) : Client
-      NNTP::Client.new.configure do |c|
-        c.host = host
-        c.port = port
-        c.use_ssl = use_ssl
-        c.open_timeout = open_timeout
-        c.read_timeout = read_timeout
-        c.verify_mode = verify_mode
+    def setup_connection(&proc : Connection -> Nil)
+      @setup_connection = proc
+      @pool.each_resource do |conn|
+        @setup_connection.call conn
       end
     end
 
-    # Will initialize a new `Client` object, configure it, then establish a connection.
-    # The created `Client` will then be returned.
-    # ```
-    # client = NNTP::Client.connect("localhost", user: "myuser", pass: "mypass")
-    # client.connected? # => true
-    # ```
-    def self.connect(host, port = 119, use_ssl = true,
-                     verify_mode : OpenSSL::SSL::VerifyMode = OpenSSL::SSL::VerifyMode::PEER,
-                     open_timeout : Int32 = 30,
-                     read_timeout : Int32 = 60,
-                     user : String? = nil, secret : String? = nil,
-                     method = :original) : Client
-      client = NNTP::Client.new.configure do |c|
-        c.host = host
-        c.port = port
-        c.use_ssl = use_ssl
-        c.open_timeout = open_timeout
-        c.read_timeout = read_timeout
-        c.verify_mode = verify_mode
-      end
-
-      client.connect(user, secret, method)
-      client
-    end
-
-    # Will yield `self` to provided block allow for variable setting.
-    # Then create a new `NNTP::Socket` instance (without connecting) Will return `self`.
-    # ```
-    # client = NNTP::Client.new
-    # client.configure do |c|
-    #   c.host = host
-    #   c.port = port
-    #   c.use_ssl = use_ssl
-    #   c.open_timeout = open_timeout
-    #   c.read_timeout = read_timeout
-    # end
-    # ```
-    def configure
-      yield self
-      ssl_context = OpenSSL::SSL::Context::Client.new
-      ssl_context.verify_mode = verify_mode
-
-      self.nntp_socket = NNTP::Socket.new(host, port, use_ssl, open_timeout, read_timeout, ssl_context: ssl_context)
-      self
-    end
-
+    # Closes all connection to the database.
     def close
-      if connected?
-        self.nntp_socket.not_nil!.finish
-      end
-    rescue ex : Net::NNTP::Error::UnknownError
-      # can raise an error if socket is already closed
+      @statements_cache.each_value &.close
+      @statements_cache.clear
+
+      @pool.close
     end
 
-    # Returns `true` if a connection has been established and `false` if not.
-    # ```
-    # client = NNTP::Client.new
-    # client.connected? # => false
-    # client.connect
-    # client.connected? # => true
-    # ```
-    def connected?
-      return false if nntp_socket.nil?
-      nntp_socket.as(NNTP::Socket).started?
+    # :nodoc:
+    def discard(connection : Connection)
+      @pool.delete connection
     end
 
-    # Will establish a `NNTP::Socket` connection using client setting and any authentication
-    # params passed.
-    # ```
-    # client = NNTP::Client.new
-    # client.connect("MyUSER", "SuperSecret")
-    #  ```
-    def connect(user : String? = nil, secret : String? = nil, method = :original)
-      raise "A connection is already established" if connected?
-      if nntp_socket.nil?
-        self.nntp_socket = NNTP::Socket.new(host, port, use_ssl, open_timeout, read_timeout)
-      end
-      self.nntp_socket.not_nil!.start(user, secret, method)
+    # :nodoc:
+    def release(connection : Connection)
+      @pool.release connection
+    end
 
-      self
+    # :nodoc:
+    def checkout_some(candidates : Enumerable(WeakRef(Connection))) : {Connection, Bool}
+      @pool.checkout_some candidates
+    end
+
+    # yields a connection from the pool
+    # the connection is returned to the pool
+    # when the block ends
+    def using_connection
+      connection = self.checkout
+      begin
+        yield connection
+      ensure
+        connection.release
+      end
+    end
+
+    # returns a connection from the pool
+    # the returned connection must be returned
+    # to the pool by explictly calling `Connection#release`
+    def checkout
+      connection = @pool.checkout
+      connection.auto_release = false
+      connection
+    end
+
+    # :nodoc:
+    def retry
+      @pool.retry do
+        yield
+      end
     end
   end
 end
-
-require "./client/*"
