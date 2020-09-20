@@ -51,9 +51,6 @@ module NNTP
 
     # Closes all connection to the database.
     def close
-      @statements_cache.each_value &.close
-      @statements_cache.clear
-
       @pool.close
     end
 

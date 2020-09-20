@@ -87,6 +87,12 @@ class NNTP::Connection
     client
   end
 
+  def self.connect(uri : URI)
+    client = NNTP::Connection.new(uri)
+    client.connect(uri.user, uri.password, :original)
+    client
+  end
+
   # Will yield `self` to provided block allow for variable setting.
   # Then create a new `NNTP::Socket` instance (without connecting) Will return `self`.
   # ```

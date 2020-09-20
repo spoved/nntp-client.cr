@@ -121,6 +121,8 @@ module NNTP::Connection::Articles
 
     if /No Such Article/i === ex.message
       raise NNTP::Error::NoSuchArticle.new(msg)
+    elsif /No Previous Article/i === ex.message
+      raise NNTP::Error::NoSuchArticle.new(msg)
     else
       raise ex
     end

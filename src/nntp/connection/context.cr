@@ -22,7 +22,7 @@ module NNTP::Connection::Context
     context_start(context.group_name, context.article_num? ? context.article_num : nil)
   end
 
-  private def context_start(group : String?, article : Int32 | Int64 | Nil = nil)
+  def context_start(group : String?, article : Int32 | Int64 | Nil = nil)
     new_group, group_changed = _group_context_update(group)
     new_headers = _article_context_update(new_group, group_changed, article)
     _contexts << NNTP::Context.new(new_group, new_headers)
