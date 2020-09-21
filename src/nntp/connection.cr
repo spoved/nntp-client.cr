@@ -31,7 +31,7 @@ class NNTP::Connection
 
   def with_socket
     yield internal_socket
-  rescue ex : Net::NNTP::Error::ConnectionLost
+  rescue ex : Net::NNTP::Error::ConnectionLost | Net::NNTP::Error::TimeLimit
     raise NNTP::Error::ConnectionLost.new(self)
   end
 
@@ -129,7 +129,7 @@ class NNTP::Connection
       self.nntp_socket = nil
     end
     @client_context.discard self
-  rescue ex : Net::NNTP::Error::ConnectionLost
+  rescue ex : Net::NNTP::Error::ConnectionLost | Net::NNTP::Error::TimeLimit
     raise NNTP::Error::ConnectionLost.new(self)
     # can raise an error if socket is already closed
   end
