@@ -119,9 +119,8 @@ module NNTP::Connection::Articles
     msg += "Message Id: #{message_id} " unless message_id.nil?
     msg += "Article Number: #{num}" unless num.nil?
 
-    if /No Such Article/i === ex.message
-      raise NNTP::Error::NoSuchArticle.new(msg)
-    elsif /No Previous Article/i === ex.message
+    case ex.message
+    when /No Such Article/i, /Article not available/i, /No Previous Article/i
       raise NNTP::Error::NoSuchArticle.new(msg)
     else
       raise ex

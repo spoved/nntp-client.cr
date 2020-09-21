@@ -29,9 +29,13 @@ class NNTP::Connection
     self.nntp_socket.not_nil!
   end
 
+  def with_socket(&block : NNTP::Socket ->)
+    yield socket
+  end
+
   # :nodoc:
   private def conn_check!
-    raise NNTP::Error::NoConnection.new("There is no active connection!") unless connected?
+    raise NNTP::Error::ConnectionLost.new(self) unless connected?
   end
 
   # nntp://user:password@usenethost.com:443/?ssl=true&verify_mode=none&method=original
@@ -79,9 +83,11 @@ class NNTP::Connection
                    read_timeout : Int32 = 60,
                    user : String? = nil, secret : String? = nil,
                    method = :original) : Connection
-    uri = URI.parse("nntp://#{URI.encode(user)}:#{URI.encode(secret)}@#{host}:#{port}/" \
+    uri = URI.parse("nntp://#{host}:#{port}/" \
                     "?ssl=#{use_ssl}&verify_mode=#{verify_mode}&method=#{method}" \
                     "&open_timeout=#{open_timeout}&read_timeout=#{read_timeout}")
+    uri.user = user unless user.nil?
+    uri.password = secret unless secret.nil?
     client = NNTP::Connection.new(uri)
     client.connect(user, secret, method)
     client
@@ -115,12 +121,14 @@ class NNTP::Connection
   end
 
   def close
+    Log.trace { "[#{Fiber.current.name}] closing NNTP Connection" }
     if connected?
       self.nntp_socket.not_nil!.finish
+      self.nntp_socket = nil
     end
     @client_context.discard self
   rescue ex : Net::NNTP::Error::UnknownError
-    raise NNTP::Error::NoConnection.new
+    raise NNTP::Error::ConnectionLost.new(self)
     # can raise an error if socket is already closed
   end
 
@@ -143,7 +151,7 @@ class NNTP::Connection
   # client.connect("MyUSER", "SuperSecret")
   #  ```
   def connect(user : String? = nil, secret : String? = nil, method = :original)
-    raise "A connection is already established" if connected?
+    raise "[#{Fiber.current.name}] A connection is already established" if connected?
     if nntp_socket.nil?
       self.nntp_socket = NNTP::Socket.new(host, port, use_ssl, open_timeout, read_timeout)
     end

@@ -32,6 +32,7 @@ module NNTP::Connection::Groups
   def group_info(group) : NNTP::Context::Group
     resp = socket.group(group)
     parts = resp.msg.split(/\s+/)
+
     {
       name:  parts[3],
       total: parts[0].to_i64,
@@ -44,6 +45,9 @@ module NNTP::Connection::Groups
     else
       raise ex
     end
+  rescue ex
+    Log.error { "[#{Fiber.current.name}] #{parts}" }
+    raise ex
   end
 
   # Will fetch a list of the article numbers in the provided group
