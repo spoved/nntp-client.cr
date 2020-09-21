@@ -12,7 +12,7 @@ module NNTP::Connection::Articles
   def with_article(num : Int32 | Int64, &block)
     check_group_context!
 
-    Log.info { "#{host}: setting current article to #{num}" }
+    Log.info { "[#{Fiber.current.name}] #{host}: setting current article to #{num}" }
     context_start(nil, num)
     yield self
     context_done

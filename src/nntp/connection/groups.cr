@@ -18,7 +18,7 @@ module NNTP::Connection::Groups
   # ```
   def with_group(group, &block)
     conn_check!
-    Log.info { "#{host}: setting current group to #{group}" }
+    Log.info { "[#{Fiber.current.name}] #{host}: setting current group to #{group}" }
     context_start(group, nil)
     yield self
     context_done
@@ -46,7 +46,7 @@ module NNTP::Connection::Groups
       raise ex
     end
   rescue ex
-    Log.error { "[#{Fiber.current.name}] #{parts}" }
+    Log.error { "[#{Fiber.current.name}] parts: #{parts}" }
     raise ex
   end
 

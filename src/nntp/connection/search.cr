@@ -34,12 +34,12 @@ module NNTP::Connection::Search
            end
 
     start_num = offset || info[:first]
-    Log.info { "Searching in Group: #{group} for id: #{message_id}" }
+    Log.info { "[#{Fiber.current.name}] Searching in Group: #{group} for id: #{message_id}" }
 
     with_group group do
       while start_num < info[:last]
         end_num = (start_num + batch_size)
-        Log.debug { "Searching articles #{start_num}-#{end_num}" \
+        Log.debug { "[#{Fiber.current.name}] Searching articles #{start_num}-#{end_num}" \
                     " out of ~#{info[:last]} : #{(end_num / info[:last]) * 100}%" }
 
         resp = xheader("message-id", start_num, end_num)
@@ -77,12 +77,12 @@ module NNTP::Connection::Search
 
     start_num = offset || info[:first]
 
-    Log.info { "Searching in Group: #{group} for a header: #{header} containing value: #{value}" }
+    Log.info { "[#{Fiber.current.name}] Searching in Group: #{group} for a header: #{header} containing value: #{value}" }
 
     with_group group do
       while start_num < info[:last]
         end_num = (start_num + batch_size)
-        Log.debug { "Searching articles #{start_num}-#{end_num}" \
+        Log.debug { "[#{Fiber.current.name}] Searching articles #{start_num}-#{end_num}" \
                     " out of ~#{info[:last]} : #{(end_num / info[:last]) * 100}%" }
 
         resp = xheader(header, start_num, end_num)
