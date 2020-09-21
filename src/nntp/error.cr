@@ -17,7 +17,7 @@ class NNTP::Error < Net::NNTP::Error
   class PoolRetryAttemptsExceeded < Error
   end
 
-  class PoolResourceLost(T) < Error
+  class PoolResourceLost(T) < IO::Error
     getter resource : T
 
     def initialize(@resource : T)

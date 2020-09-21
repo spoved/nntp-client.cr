@@ -33,7 +33,7 @@ module NNTP::Connection::Articles
   end
 
   private def _headers(num : Int32 | Int64)
-    resp = self.socket.head(num)
+    resp = with_socket &.head(num)
     parse_head_resp(resp, num)
   end
 
@@ -48,7 +48,7 @@ module NNTP::Connection::Articles
   def headers(message_id : String)
     check_group_context!
 
-    resp = self.socket.head(message_id)
+    resp = with_socket &.head(message_id)
     parse_head_resp(resp)
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex, message_id: message_id)
@@ -58,14 +58,14 @@ module NNTP::Connection::Articles
   def body(num : Int32 | Int64) : Array(String)
     check_group_context!
 
-    self.socket.body(num).text
+    with_socket &.body(num).text
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex, num: num)
   end
 
   # :ditto:
   def body(message_id : String) : Array(String)
-    self.socket.body(message_id).text
+    with_socket &.body(message_id).text
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex, message_id: message_id)
   end
@@ -73,7 +73,7 @@ module NNTP::Connection::Articles
   def xheader(header, message_id : String? = nil)
     check_group_context!
     check_article_context! if message_id.nil?
-    self.socket.xdhr(header, message_id)
+    with_socket &.xdhr(header, message_id)
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex, message_id: message_id)
   end
@@ -81,7 +81,7 @@ module NNTP::Connection::Articles
   def xheader(header, num : Int64 | Int32, end_num : Int64 | Int32 | Nil = nil, all : Bool = false)
     check_group_context!
 
-    self.socket.xdhr(header, num, end_num, all)
+    with_socket &.xdhr(header, num, end_num, all)
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex)
   end
@@ -89,7 +89,7 @@ module NNTP::Connection::Articles
   def xover(num : Int64 | Int32, end_num : Int64 | Int32 | Nil = nil, all : Bool = false)
     check_group_context!
 
-    self.socket.xover(num, end_num, all)
+    with_socket &.xover(num, end_num, all)
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex)
   end
@@ -97,8 +97,8 @@ module NNTP::Connection::Articles
   def last
     check_group_context!
 
-    self.socket.stat context.article_num? ? context.article_num : 0
-    resp = self.socket.last
+    with_socket &.stat context.article_num? ? context.article_num : 0
+    resp = with_socket &.last
     parse_head_resp(resp)
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex)
@@ -107,8 +107,8 @@ module NNTP::Connection::Articles
   def next
     check_group_context!
 
-    self.socket.stat context.article_num? ? context.article_num : 0
-    resp = self.socket.next
+    with_socket &.stat context.article_num? ? context.article_num : 0
+    resp = with_socket &.next
     parse_head_resp(resp)
   rescue ex : Net::NNTP::Error::ServerBusy
     check_for_no_such_article(ex)

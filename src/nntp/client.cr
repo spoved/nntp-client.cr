@@ -75,7 +75,13 @@ module NNTP
     def using_connection
       connection = self.checkout
       begin
-        yield connection
+        count = 0
+        retry do
+          count += 1
+          yield connection
+        end
+
+        Log.trace { "[#{Fiber.current.name}] nntp.client.retry count #{count}" } if count > 1
       ensure
         connection.release
       end

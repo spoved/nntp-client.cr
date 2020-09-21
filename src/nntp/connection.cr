@@ -25,12 +25,14 @@ class NNTP::Connection
   include NNTP::Connection::Pool
 
   # :nodoc:
-  private def socket : NNTP::Socket
+  private def internal_socket : NNTP::Socket
     self.nntp_socket.not_nil!
   end
 
-  def with_socket(&block : NNTP::Socket ->)
-    yield socket
+  def with_socket
+    yield internal_socket
+  rescue ex : Net::NNTP::Error::ConnectionLost
+    raise NNTP::Error::ConnectionLost.new(self)
   end
 
   # :nodoc:
@@ -127,7 +129,7 @@ class NNTP::Connection
       self.nntp_socket = nil
     end
     @client_context.discard self
-  rescue ex : Net::NNTP::Error::UnknownError
+  rescue ex : Net::NNTP::Error::ConnectionLost
     raise NNTP::Error::ConnectionLost.new(self)
     # can raise an error if socket is already closed
   end

@@ -102,7 +102,7 @@ module NNTP::Connection::Context
     end
 
     # Lets keep article updates simple. Just updated the pointer if its set
-    self.socket.stat context.article_num if context.article?
+    with_socket &.stat context.article_num if context.article?
   end
 
   private def check_group_context!

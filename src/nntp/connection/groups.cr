@@ -3,11 +3,11 @@ require "../context"
 module NNTP::Connection::Groups
   delegate list_active, list_active_times, list_distributions,
     list_distrib_pats, list_newsgroups, list_subscriptions,
-    to: @nntp_socket.not_nil!
+    to: with_socket
 
   # Fetch all groups
   def groups : Array(String)
-    self.socket.list.text
+    with_socket &.list.text
   end
 
   # Will set the current group to provided *group* and yield `self` to provided block
@@ -30,7 +30,7 @@ module NNTP::Connection::Groups
   # client.group_info "alt.binaries.cbt" # => {name: "alt.binaries.cbt", total: 56894558, first: 15495, last: 56910052}
   # ```
   def group_info(group) : NNTP::Context::Group
-    resp = socket.group(group)
+    resp = with_socket &.group(group)
     parts = resp.msg.split(/\s+/)
 
     {
@@ -52,12 +52,12 @@ module NNTP::Connection::Groups
 
   # Will fetch a list of the article numbers in the provided group
   def group_article_ids(group)
-    self.socket.listgroup(group).text.map &.to_i64
+    with_socket &.listgroup(group).text.map &.to_i64
   end
 
   # Will fetch a list of the article numbers in the current group
   def article_ids
     check_group_context!
-    self.socket.listgroup.text.map &.to_i64
+    with_socket &.listgroup.text.map &.to_i64
   end
 end
