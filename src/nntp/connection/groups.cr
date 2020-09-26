@@ -1,9 +1,31 @@
 require "../context"
 
+private macro delegate_block(*methods, to object)
+  {% for method in methods %}
+    {% if method.id.ends_with?('=') && method.id != "[]=" %}
+      def {{method.id}}(arg)
+        {{object.id}} &.{{method.id}} arg
+      end
+    {% else %}
+      def {{method.id}}(*args, **options)
+        {{object.id}} &.{{method.id}}(*args, **options)
+      end
+
+      {% if method.id != "[]=" %}
+        def {{method.id}}(*args, **options)
+          {{object.id}} &.{{method.id}}(*args, **options) do |*yield_args|
+            yield *yield_args
+          end
+        end
+      {% end %}
+    {% end %}
+  {% end %}
+end
+
 module NNTP::Connection::Groups
-  delegate list_active, list_active_times, list_distributions,
+  delegate_block list_active, list_active_times, list_distributions,
     list_distrib_pats, list_newsgroups, list_subscriptions,
-    to: with_socket
+    list_overview_fmt, to: with_socket
 
   # Fetch all groups
   def groups : Array(String)
@@ -32,7 +54,6 @@ module NNTP::Connection::Groups
   def group_info(group) : NNTP::Context::Group
     resp = with_socket &.group(group)
     parts = resp.msg.split(/\s+/)
-
     {
       name:  parts[3],
       total: parts[0].to_i64,
@@ -45,9 +66,6 @@ module NNTP::Connection::Groups
     else
       raise ex
     end
-  rescue ex
-    Log.error { "[#{Fiber.current.name}] parts: #{parts}" }
-    raise ex
   end
 
   # Will fetch a list of the article numbers in the provided group
