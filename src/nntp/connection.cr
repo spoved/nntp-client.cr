@@ -31,7 +31,7 @@ class NNTP::Connection
 
   def with_socket
     yield internal_socket
-  rescue ex : Net::NNTP::Error::ConnectionLost | Net::NNTP::Error::TimeLimit
+  rescue ex : Net::NNTP::Error::ConnectionLost | Net::NNTP::Error::TimeLimit | Net::NNTP::Error::UnknownError | OpenSSL::SSL::Error
     raise NNTP::Error::ConnectionLost.new(self)
   end
 

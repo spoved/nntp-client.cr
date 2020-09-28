@@ -11,7 +11,7 @@ license: MIT
 dependencies:
   nntp-lib:
     github: spoved/nntp-lib.cr
-    version: ~> 1.0.5
+    version: ~> 1.0.8
 development_dependencies:
   dotenv:
     github: gdotdesign/cr-dotenv

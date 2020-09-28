@@ -62,7 +62,7 @@ module NNTP::Connection::Groups
     }
   rescue ex : Net::NNTP::Error::ServerBusy
     if /No Such Group/i === ex.message || /411/ === ex.message
-      raise NNTP::Error::NoSuchGroup.new(group)
+      raise ::NNTP::Error::NoSuchGroup.new(group)
     else
       raise ex
     end
