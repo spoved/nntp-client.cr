@@ -30,7 +30,7 @@ describe NNTP::Connection do
       end
 
       describe "missing" do
-        it "#last" do
+        pending "#last" do
           with_client do |client|
             client.with_group newsgroup do
               expect_raises NNTP::Error::NoSuchArticle do
