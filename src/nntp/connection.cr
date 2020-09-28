@@ -125,13 +125,10 @@ class NNTP::Connection
   def close
     Log.trace { "[#{Fiber.current.name}] closing NNTP Connection" }
     if connected?
-      self.nntp_socket.not_nil!.finish
+      self.nntp_socket.not_nil!.try &.finish
       self.nntp_socket = nil
     end
     @client_context.discard self
-  rescue ex : Net::NNTP::Error::ConnectionLost | Net::NNTP::Error::TimeLimit
-    raise NNTP::Error::ConnectionLost.new(self)
-    # can raise an error if socket is already closed
   end
 
   # Returns `true` if a connection has been established and `false` if not.
@@ -151,7 +148,7 @@ class NNTP::Connection
   # ```
   # client = NNTP::Connection.new
   # client.connect("MyUSER", "SuperSecret")
-  #  ```
+  # ```
   def connect(user : String? = nil, secret : String? = nil, method = :original)
     raise "[#{Fiber.current.name}] A connection is already established" if connected?
     if nntp_socket.nil?

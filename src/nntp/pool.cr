@@ -170,13 +170,14 @@ class NNTP::Pool(T)
     (current_available + @retry_attempts).times do |i|
       begin
         sleep @retry_delay if i >= current_available
+        # Log.warn { "[#{Fiber.current.name}] nntp.pool.retry attempts: #{@retry_attempts} current: #{i}." }
         return yield
       rescue e : NNTP::Error::PoolResourceLost(T)
-        Log.error(exception: e) { "[#{Fiber.current.name}] nntp.pool.retry lost resource. attempts: #{@retry_attempts} current: #{i}. msg: #{e.message}" }
+        Log.error { "[#{Fiber.current.name}] nntp.pool.retry lost resource. attempts: #{@retry_attempts} current: #{i}. msg: #{e.message}" }
         # if the connection is lost close it to release resources
         # and remove it from the known pool.
         sync { delete(e.resource) }
-        e.resource.close
+        e.resource.try &.close
       rescue e : NNTP::Error::PoolResourceRefused
         # a ConnectionRefused means a new connection
         # was intended to be created

@@ -78,6 +78,7 @@ module NNTP
         count = 0
         retry do
           count += 1
+          connection = self.checkout unless connection.connected?
           yield connection
         end
 
