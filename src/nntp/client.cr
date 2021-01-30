@@ -1,4 +1,5 @@
 require "./connection"
+require "uri"
 
 module NNTP
   class Client
@@ -13,7 +14,7 @@ module NNTP
     @pool : Pool(NNTP::Connection)
     @setup_connection : NNTP::Connection -> Nil
 
-    def connection_pool_options(params : HTTP::Params)
+    def connection_pool_options(params : URI::Params)
       {
         initial_pool_size:  params.fetch("initial_pool_size", 1).to_i,
         max_pool_size:      params.fetch("max_pool_size", 0).to_i,
@@ -26,7 +27,7 @@ module NNTP
 
     # :nodoc:
     def initialize(@uri : URI)
-      params = HTTP::Params.parse(uri.query || "")
+      params = URI::Params.parse(uri.query || "")
       pool_options = connection_pool_options(params)
 
       @setup_connection = ->(conn : NNTP::Connection) {
