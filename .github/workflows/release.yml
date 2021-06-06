@@ -1,0 +1,31 @@
+name: release
+concurrency:
+  group: build
+on: [release]
+jobs:
+  spec:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        crystal: [latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Crystal
+        uses: oprypin/install-crystal@v1
+        with:
+          crystal: ${{ matrix.crystal }}
+      - name: Install shards
+        run: shards install
+      - name: Run tests
+        run: crystal spec --error-trace
+        env:
+          USENET_HOST: ${{ secrets.USENET_HOST }}
+          USENET_PASS: ${{ secrets.USENET_PASS }}
+          USENET_PORT: ${{ secrets.USENET_PORT }}
+          USENET_SSL: ${{ secrets.USENET_SSL }}
+          USENET_USER: ${{ secrets.USENET_USER }}
+      # - name: Check formatting
+      #   run: crystal tool format --check

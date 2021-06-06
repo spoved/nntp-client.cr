@@ -1,17 +1,24 @@
 # nntp-client
 
-[![Build Status](https://travis-ci.com/spoved/nntp-client.cr.svg?branch=master)](https://travis-ci.com/spoved/nntp-client.cr)
+<p align="center">
+    <a href="https://github.com/spoved/nntp-client.cr/actions/workflows/build.yml">
+        <img src="https://github.com/spoved/nntp-client.cr/actions/workflows/build.yml/badge.svg" alt="Build Status"></a>
+    <a href="https://github.com/spoved/nntp-client.cr/actions/workflows/release.yml">
+        <img src="https://github.com/spoved/nntp-client.cr/actions/workflows/release.yml/badge.svg" alt="Release Status"></a>
+    <a href="https://github.com/spoved/nntp-client.cr/releases">
+        <img src="https://img.shields.io/github/v/release/spoved/nntp-client.cr" alt="Latest release"></a>
+</p>
 
 A NNTP (Network News Transfer Protocol) client aimed to provide a more useful interface to the [nntp-lib](https://github.com/spoved/nntp-lib.cr)
 
 ## Installation
 
 1. Add the dependency to your `shard.yml`:
-
-    dependencies:
-      nntp-client:
-        github: spoved/nntp-client.cr
-
+   ```yaml
+   dependencies:
+     nntp-client:
+       github: spoved/nntp-client.cr
+   ```
 2. Run `shards install`
 
 ## Usage
